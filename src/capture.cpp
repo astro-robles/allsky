@@ -80,9 +80,9 @@ long dayExposure_us				= DEFAULT_DAYEXPOSURE;
 int dayMaxAutoexposure_ms		= DEFAULT_DAYMAXAUTOEXPOSURE_MS;
 #define DEFAULT_DAYAUTOEXPOSURE	true
 bool dayAutoExposure			= DEFAULT_DAYAUTOEXPOSURE;	// is it on or off for daylight?
-#define DEFAULT_DAYDELAY		(5 * MS_IN_SEC)		// 5 seconds
+#define DEFAULT_DAYDELAY		(900 * MS_IN_SEC)		// 900 seconds or 15 min
 int dayDelay_ms					= DEFAULT_DAYDELAY;	// Delay in milliseconds.
-#define DEFAULT_NIGHTDELAY		(10 * MS_IN_SEC)	// 10 seconds
+#define DEFAULT_NIGHTDELAY		(60 * MS_IN_SEC)	// 60 seconds or 1 min
 int nightDelay_ms				= DEFAULT_NIGHTDELAY;	// Delay in milliseconds.
 #define DEFAULT_NIGHTMAXAUTOEXPOSURE_MS (20 * MS_IN_SEC)	// 20 seconds
 int nightMaxAutoexposure_ms		= DEFAULT_NIGHTMAXAUTOEXPOSURE_MS;
@@ -805,36 +805,36 @@ int main(int argc, char *argv[])
 	const char *locale			= DEFAULT_LOCALE;
 	// All the font settings apply to both day and night.
 	int fontnumber				= DEFAULT_FONTNUMBER;
-	int iTextX					= DEFAULT_ITEXTX;
-	int iTextY					= DEFAULT_ITEXTY;
+	int iTextX				= DEFAULT_ITEXTX;
+	int iTextY				= DEFAULT_ITEXTY;
 	int iTextLineHeight			= DEFAULT_ITEXTLINEHEIGHT;
 	char const *ImgText			= "";
-	char const *ImgExtraText	= "";
+	char const *ImgExtraText		= "";
 	int extraFileAge			= 0;	// 0 disables it
-#define DEFAULT_FONTSIZE		7
+#define DEFAULT_FONTSIZE			7
 	double fontsize				= DEFAULT_FONTSIZE;
 #define SMALLFONTSIZE_MULTIPLIER 0.08
 	int linewidth				= DEFAULT_LINEWIDTH;
 	int outlinefont				= DEFAULT_OUTLINEFONT;
 	int fontcolor[3]			= { 255, 0, 0 };
-	int smallFontcolor[3]		= { 0, 0, 255 };
+	int smallFontcolor[3]			= { 0, 0, 255 };
 	int linetype[3]				= { cv::LINE_AA, 8, 4 };
 	int linenumber				= DEFAULT_LINENUMBER;
 
-	int width					= DEFAULT_WIDTH;	int originalWidth  = width;
-	int height					= DEFAULT_HEIGHT;	int originalHeight = height;
+	int width				= DEFAULT_WIDTH;	int originalWidth  = width;
+	int height				= DEFAULT_HEIGHT;	int originalHeight = height;
 
 #define DEFAULT_DAYBIN			1		// binning during the day probably isn't too useful...
 #define DEFAULT_NIGHTBIN		1
-	int dayBin					= DEFAULT_DAYBIN;
+	int dayBin				= DEFAULT_DAYBIN;
 	int nightBin				= DEFAULT_NIGHTBIN;
 
 #define DEFAULT_IMAGE_TYPE		AUTO_IMAGE_TYPE
-	int Image_type				= DEFAULT_IMAGE_TYPE;
+	int Image_type				= DEFAULT_IMAGE_TYPE; //where is the AUTO_IMAGE_TYPE defined?
 
 #define DEFAULT_ASIBANDWIDTH	40
 	int asiBandwidth			= DEFAULT_ASIBANDWIDTH;
-	bool asiAutoBandwidth		= false;						// is Auto Bandwidth on or off?
+	bool asiAutoBandwidth			= false;		// is Auto Bandwidth on or off?
 
 	// There is no max day autoexposure since daylight exposures are always pretty short.
 #define DEFAULT_NIGHTEXPOSURE	(5 * US_IN_SEC)					// 5 seconds
@@ -854,17 +854,17 @@ int main(int argc, char *argv[])
 
 #define DEFAULT_DAYGAIN			false
 	bool dayGain				= DEFAULT_DAYGAIN;
-	bool dayAutoGain			= false;						// is Auto Gain on or off for daytime?
+	bool dayAutoGain			= false;			// is Auto Gain on or off for daytime?
 #define DEFAULT_NIGHTGAIN		150
 	int nightGain				= DEFAULT_NIGHTGAIN;
 #define DEFAULT_NIGHTAUTOGAIN	false
-	bool nightAutoGain			= DEFAULT_NIGHTAUTOGAIN;		// is Auto Gain on or off for nighttime?
+	bool nightAutoGain			= DEFAULT_NIGHTAUTOGAIN;	// is Auto Gain on or off for nighttime?
 #define DEFAULT_NIGHTMAXGAIN	200
 	int nightMaxGain			= DEFAULT_NIGHTMAXGAIN;
 
 	int currentDelay_ms			= NOT_SET;
 
-#define DEFAULT_GAMMA			50								// not supported by all cameras
+#define DEFAULT_GAMMA			50						// not supported by all cameras
 	int gamma				 	= DEFAULT_GAMMA;
 
 #define DEFAULT_BRIGHTNESS		50
@@ -1664,9 +1664,7 @@ int main(int argc, char *argv[])
 		// If it's a color camera, create color pictures.
 		// If it's a mono camera use RAW16 if the image file is a .png, otherwise use RAW8.
 		// There is no good way to handle Y8 automatically so it has to be set manually.
-		if (ASICameraInfo.IsColorCam)
-			Image_type = IMG_RGB24;
-		else if (strcmp(imagetype, "png") == 0)
+		if (strcmp(imagetype, "png") == 0)
 			Image_type = IMG_RAW16;
 		else // jpg
 			Image_type = IMG_RAW8;
@@ -1678,12 +1676,6 @@ int main(int argc, char *argv[])
 		sType = "RAW16";
 		current_bpp = 2;
 		current_bit_depth = 16;
-	}
-	else if (Image_type == IMG_RGB24)
-	{
-		sType = "RGB24";
-		current_bpp = 3;
-		current_bit_depth = 8;
 	}
 	else if (Image_type == IMG_RAW8)
 	{
@@ -1737,17 +1729,9 @@ int main(int argc, char *argv[])
 	printf(" Skip Frames (night): %d\n", night_skip_frames);
 	printf(" Aggression: %d%%\n", aggression);
 
-	if (ASICameraInfo.IsCoolerCam)
-	{
-		printf(" Cooler Enabled: %s", yesNo(coolerEnabled));
-		if (coolerEnabled) printf(", Target Temperature: %ld C\n", targetTemp);
-		printf("\n");
-	}
+	
 	printf(" Gamma: %d\n", gamma);
-	if (ASICameraInfo.IsColorCam)
-	{
-		printf(" WB Red: %d, Blue: %d, Auto: %s\n", WBR, WBB, yesNo(autoAWB));
-	}
+	
 	printf(" Binning (day): %d\n", dayBin);
 	printf(" Binning (night): %d\n", nightBin);
 	printf(" USB Speed: %d, auto: %s\n", asiBandwidth, yesNo(asiAutoBandwidth));
@@ -1806,23 +1790,6 @@ int main(int argc, char *argv[])
 	setControl(CamNum, ASI_GAMMA, gamma, ASI_FALSE);
 	setControl(CamNum, ASI_FLIP, flip, ASI_FALSE);
 
-	if (ASICameraInfo.IsCoolerCam)
-	{
-		asiRetCode = setControl(CamNum, ASI_COOLER_ON, coolerEnabled ? ASI_TRUE : ASI_FALSE, ASI_FALSE);
-		if (asiRetCode != ASI_SUCCESS)
-		{
-			printf("%s", c(KRED));
-			printf(" WARNING: Could not enable cooler: %s, but continuing without it.\n", getRetCode(asiRetCode));
-			printf("%s", c(KNRM));
-		}
-		asiRetCode = setControl(CamNum, ASI_TARGET_TEMP, targetTemp, ASI_FALSE);
-		if (asiRetCode != ASI_SUCCESS)
-		{
-			printf("%s", c(KRED));
-			printf(" WARNING: Could not set cooler temperature: %s, but continuing without it.\n", getRetCode(asiRetCode));
-			printf("%s", c(KNRM));
-		}
-	}
 
 	if (! bSaveRun && pthread_create(&hthdSave, 0, SaveImgThd, 0) == 0)
 	{
