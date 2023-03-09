@@ -70,36 +70,9 @@ fi
 # Make sure allsky.sh is not already running.
 pgrep allsky.sh | grep -v $$ | xargs "sudo kill -9" 2>/dev/null
 
-if [ "${CAMERA}" = "RPiHQ" ]; then
-	# See if we should use libcamera-still or raspistill.
-	# If libcamera is installed and works, we'll use it.
-	# If it's not installed, or IS installed but doesn't work (the user may not have it configured),
-	# we'll use raspistill.
-	which libcamera-still > /dev/null
-	RET=$?
-	if [ ${RET} -eq 0 ]; then
-		LIBCAMERA_LOG_LEVELS="ERROR,FATAL" libcamera-still --timeout 1 --nopreview > /dev/null 2>&1
-		RET=$?
-	fi
-	if [ ${RET} -eq 0 ]; then
-		RPiHQ_SOFTWARE_TO_USE="libcamera"
-	else
-		RPiHQ_SOFTWARE_TO_USE="raspistill"
-		# Either libcamera isn't installed or it doesn't work, so try raspistill instead.
 
-		# TODO: Should try and run raspistill command - doing that is more reliable since
-		# the output of vcgencmd changes depending on the OS and how the Pi is configured.
-		# Newer kernels/libcamera give:   supported=1 detected=0, libcamera interfaces=1
-		# but only if    start_x=1    is in /boot/config.txt
-		vcgencmd get_camera | grep --silent "supported=1" ######### detected=1"
-		RET=$?
-	fi
-	if [ ${RET} -ne 0 ]; then
-		echo -e "${RED}*** FATAL ERROR: RPiHQ Camera not found.  Make sure it's enabled. Stopping.${NC}" >&2
-		doExit ${EXIT_ERROR_STOP} "Error" "${ERROR_MSG_PREFIX}\nRPiHQ Camera\nnot found!\nMake sure it's enabled."
-	fi
 
-elif [ "${CAMERA}" = "ZWO" ]; then
+if [ "${CAMERA}" = "ZWO" ]; then
 	RESETTING_USB_LOG="${ALLSKY_TMP}/resetting_USB.txt"
 	reset_usb()		# resets the USB bus
 	{
@@ -188,10 +161,6 @@ fi
 # but in order for it to work need to make ARGUMENTS an array.
 ARGUMENTS=()
 
-if [[ ${CAMERA} == "RPiHQ" ]]; then
-	# This argument needs to come first since the capture code checks for it first.
-	ARGUMENTS+=(-cmd ${RPiHQ_SOFTWARE_TO_USE})
-fi
 
 # This argument should come second so the capture program knows if it should display debug output.
 ARGUMENTS+=(-debuglevel ${ALLSKY_DEBUG_LEVEL})
@@ -241,11 +210,9 @@ GOT_SIGTERM="false"	&& trap "GOT_SIGTERM=true" SIGTERM
 GOT_SIGINT="false"  && trap "GOT_SIGINT=true" SIGINT
 GOT_SIGUSR1="false" && trap "GOT_SIGUSR1=true" SIGUSR1
 
-if [[ $CAMERA == "ZWO" ]]; then
-	CAPTURE="capture"
-elif [[ $CAMERA == "RPiHQ" ]]; then
-	CAPTURE="capture_RPiHQ"
-fi
+
+CAPTURE="capture"
+
 rm -f "${ALLSKY_NOTIFICATION_LOG}"	# clear out any notificatons from prior runs.
 "${ALLSKY_HOME}/${CAPTURE}" "${ARGUMENTS[@]}"		# run the main program
 RETCODE=$?
