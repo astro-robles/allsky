@@ -54,7 +54,7 @@ if [ "${ALLSKY_VARIABLE_SET}" = "" ]; then
 	ALLSKY_NOTIFICATION_LOG="${ALLSKY_TMP}/notification_log.txt"
 
 	# Holds all the dark frames.
-	ALLSKY_DARKS="${ALLSKY_DARKS:-${ALLSKY_HOME}/darks}"
+	#ALLSKY_DARKS="${ALLSKY_DARKS:-${ALLSKY_HOME}/darks}"
 
 	# Location of optional allsky-portal package.
 	ALLSKY_WEBUI=${ALLSKY_WEBUI:-/var/www/html}
